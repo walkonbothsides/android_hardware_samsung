@@ -158,6 +158,11 @@ ndk::ScopedAStatus Fingerprint::createSession(int32_t /*sensorId*/, int32_t user
     return ndk::ScopedAStatus::ok();
 }
 
+int Fingerprint::sehRequest(int cmd, int param, const std::vector<uint8_t>& input,
+                            std::vector<uint8_t>* output) {
+    return mHal.request(cmd, param, input, output);
+}
+
 void Fingerprint::notify(const fingerprint_msg_t* msg) {
     Fingerprint* thisPtr = sInstance;
     if (msg->type == FINGERPRINT_ACQUIRED &&

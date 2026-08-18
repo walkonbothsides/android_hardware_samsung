@@ -8,6 +8,9 @@
 
 #include <hardware/fingerprint.h>
 
+#include <cstdint>
+#include <vector>
+
 namespace aidl {
 namespace android {
 namespace hardware {
@@ -18,6 +21,8 @@ class LegacyHAL {
   public:
     bool openHal(fingerprint_notify_t notify);
     int request(int cmd, int param);
+    int request(int cmd, int param, const std::vector<uint8_t>& input,
+                std::vector<uint8_t>* output);
 
     int (*ss_fingerprint_close)();
     int (*ss_fingerprint_open)(const char* id);

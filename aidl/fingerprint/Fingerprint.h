@@ -29,6 +29,8 @@ class Fingerprint : public BnFingerprint {
     ndk::ScopedAStatus createSession(int32_t sensorId, int32_t userId,
                                      const std::shared_ptr<ISessionCallback>& cb,
                                      std::shared_ptr<ISession>* out) override;
+    int sehRequest(int cmd, int param, const std::vector<uint8_t>& input,
+                   std::vector<uint8_t>* output);
 
   private:
     static void notify(

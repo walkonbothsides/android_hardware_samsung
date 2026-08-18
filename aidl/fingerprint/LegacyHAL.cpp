@@ -8,6 +8,7 @@
 
 #include <android-base/logging.h>
 
+#include <cerrno>
 #include <dlfcn.h>
 
 namespace aidl {
@@ -71,8 +72,27 @@ bool LegacyHAL::openHal(fingerprint_notify_t notify) {
 }
 
 int LegacyHAL::request(int cmd, int param) {
-    // TO-DO: input, output handling not implemented
     int result = ss_fingerprint_request(cmd, nullptr, 0, nullptr, 0, param);
+    LOG(INFO) << "request(cmd=" << cmd << ", param=" << param << ", result=" << result << ")";
+    return result;
+}
+
+int LegacyHAL::request(int cmd, int param, const std::vector<uint8_t>& input,
+                       std::vector<uint8_t>* output) {
+    constexpr size_t kMaxOutputSize = 0x2800;
+    output->resize(kMaxOutputSize);
+    int result = ss_fingerprint_request(
+            cmd, input.empty() ? nullptr : reinterpret_cast<char*>(const_cast<uint8_t*>(input.data())),
+            input.size(), reinterpret_cast<char*>(output->data()), output->size(), param);
+    if (result <= 0) {
+        output->clear();
+    } else if (static_cast<size_t>(result) > output->size()) {
+        LOG(ERROR) << "request returned invalid output size " << result;
+        output->clear();
+        result = -EOVERFLOW;
+    } else {
+        output->resize(result);
+    }
     LOG(INFO) << "request(cmd=" << cmd << ", param=" << param << ", result=" << result << ")";
     return result;
 }

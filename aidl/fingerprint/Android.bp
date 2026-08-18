@@ -24,6 +24,7 @@ cc_binary {
         "android.hardware.biometrics.fingerprint-V4-ndk",
         "android.hardware.biometrics.common-V4-ndk",
         "android.hardware.biometrics.common.util",
+        "//vendor/samsung/sm8650-common:vendor.samsung.hardware.biometrics.fingerprint-V1-ndk",
     ],
     static_libs: ["libandroid.hardware.biometrics.fingerprint.SamsungProps"],
     vendor: true,
