@@ -41,7 +41,9 @@ Session::Session(LegacyHAL hal, int userId, std::shared_ptr<ISessionCallback> cb
 
     char filename[64];
     snprintf(filename, sizeof(filename), FINGERPRINT_DATA_DIR, userId);
-    mHal.ss_fingerprint_set_active_group(userId, filename);
+    if (mHal.ss_fingerprint_set_active_group) {
+        mHal.ss_fingerprint_set_active_group(userId, filename);
+    }
 }
 
 ndk::ScopedAStatus Session::generateChallenge() {

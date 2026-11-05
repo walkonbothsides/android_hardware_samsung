@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "Fingerprint.h"
+#include "LegacyHAL.h"
 
 #include <android-base/logging.h>
 
 #include <dlfcn.h>
+#include <cerrno>
 
 namespace aidl {
 namespace android {
@@ -21,6 +22,10 @@ bool LegacyHAL::openHal(fingerprint_notify_t notify) {
 
     if (!handle) {
         handle = dlopen("libsfp_sensor.so", RTLD_NOW);
+    }
+
+    if (!handle) {
+        return false;
     }
 
     if (handle) {
@@ -68,6 +73,27 @@ bool LegacyHAL::openHal(fingerprint_notify_t notify) {
     }
 
     return false;
+}
+
+int LegacyHAL::request(int cmd, int param, const std::vector<uint8_t>& input,
+                       std::vector<uint8_t>* output) {
+    constexpr size_t kMaxFidoBytes = 512;
+    output->clear();
+    if (!ss_fingerprint_request || input.empty() || input.size() > kMaxFidoBytes) {
+        return -EINVAL;
+    }
+
+    // The legacy ABI uses mutable buffers even for request input.
+    std::vector<uint8_t> request(input);
+    output->resize(kMaxFidoBytes);
+    int result = ss_fingerprint_request(cmd, reinterpret_cast<char*>(request.data()),
+            request.size(), reinterpret_cast<char*>(output->data()), output->size(), param);
+    if (result <= 0 || static_cast<size_t>(result) > output->size()) {
+        output->clear();
+        return result > 0 ? -EOVERFLOW : result;
+    }
+    output->resize(result);
+    return result;
 }
 
 int LegacyHAL::request(int cmd, int param) {

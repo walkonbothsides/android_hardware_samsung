@@ -25,6 +25,7 @@ namespace fingerprint {
 class Fingerprint : public BnFingerprint {
   public:
     Fingerprint();
+    int requestFido(const std::vector<uint8_t>& input, std::vector<uint8_t>* output);
     ndk::ScopedAStatus getSensorProps(std::vector<SensorProps>* _aidl_return) override;
     ndk::ScopedAStatus createSession(int32_t sensorId, int32_t userId,
                                      const std::shared_ptr<ISessionCallback>& cb,

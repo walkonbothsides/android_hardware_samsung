@@ -5,6 +5,7 @@
  */
 
 #include "Fingerprint.h"
+#include "SehFingerprint.h"
 
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
@@ -20,6 +21,15 @@ int main() {
     binder_status_t status =
             AServiceManager_addService(fingerprint->asBinder().get(), instance.c_str());
     CHECK(status == STATUS_OK);
+
+    auto sehFingerprint = ndk::SharedRefBase::make<
+            aidl::android::hardware::biometrics::fingerprint::SehFingerprint>(fingerprint);
+    const std::string sehInstance =
+            std::string(sehFingerprint->descriptor) + "/default";
+    if (AServiceManager_addService(sehFingerprint->asBinder().get(), sehInstance.c_str()) !=
+            STATUS_OK) {
+        return EXIT_FAILURE;
+    }
 
     ABinderProcess_joinThreadPool();
     return EXIT_FAILURE;  // should not reach

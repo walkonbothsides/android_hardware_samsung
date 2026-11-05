@@ -104,6 +104,10 @@ skip_uinput_setup:
     return;
 }
 
+int Fingerprint::requestFido(const std::vector<uint8_t>& input, std::vector<uint8_t>* output) {
+    return mHal.request(FINGERPRINT_REQUEST_PROCESS_FIDO, 0, input, output);
+}
+
 ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* out) {
     std::vector<common::ComponentInfo> componentInfo = {
             {HW_COMPONENT_ID, HW_VERSION, FW_VERSION, SERIAL_NUMBER, "" /* softwareVersion */},

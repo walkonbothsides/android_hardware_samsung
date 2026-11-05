@@ -12,9 +12,11 @@ cc_binary {
     srcs: [
         "CancellationSignal.cpp",
         "Fingerprint.cpp",
+        "ion_compat.cpp",
         "LegacyHAL.cpp",
         "LockoutTracker.cpp",
         "Session.cpp",
+        "SehFingerprint.cpp",
         "service.cpp",
     ],
     shared_libs: [
@@ -25,7 +27,11 @@ cc_binary {
         "android.hardware.biometrics.common-V4-ndk",
         "android.hardware.biometrics.common.util",
     ],
-    static_libs: ["libandroid.hardware.biometrics.fingerprint.SamsungProps"],
+    static_libs: [
+        "libandroid.hardware.biometrics.fingerprint.SamsungProps",
+        "libsamsung_fingerprint_extension",
+    ],
+    ldflags: ["-Wl,--export-dynamic"],
     vendor: true,
 }
 
@@ -34,4 +40,35 @@ sysprop_library {
     srcs: ["fingerprint.sysprop"],
     property_owner: "Vendor",
     vendor: true,
+}
+
+
+// Match the shipped Samsung V1 wire ABI without replacing its prebuilt library.
+cc_genrule {
+    name: "samsung_fingerprint_extension_aidl",
+    tools: ["aidl"],
+    srcs: ["seh/vendor/samsung/hardware/biometrics/fingerprint/*.aidl"],
+    cmd: "$(location aidl) --lang=ndk --structured --stability=vintf --version=1 " +
+        "--hash=d1ee0e678dcdec96506558215f7a8b0b2acd74a9 " +
+        "-Ihardware/samsung/aidl/fingerprint/seh -h$(genDir) -o$(genDir) $(in)",
+    out: [
+        "aidl/vendor/samsung/hardware/biometrics/fingerprint/ISehFingerprint.h",
+        "aidl/vendor/samsung/hardware/biometrics/fingerprint/BnSehFingerprint.h",
+        "aidl/vendor/samsung/hardware/biometrics/fingerprint/BpSehFingerprint.h",
+        "aidl/vendor/samsung/hardware/biometrics/fingerprint/SehResult.h",
+        "vendor/samsung/hardware/biometrics/fingerprint/ISehFingerprint.cpp",
+        "vendor/samsung/hardware/biometrics/fingerprint/SehResult.cpp",
+    ],
+}
+
+cc_library_static {
+    name: "libsamsung_fingerprint_extension",
+    vendor: true,
+    srcs: [
+        ":samsung_fingerprint_extension_aidl{vendor/samsung/hardware/biometrics/fingerprint/ISehFingerprint.cpp}",
+        ":samsung_fingerprint_extension_aidl{vendor/samsung/hardware/biometrics/fingerprint/SehResult.cpp}",
+    ],
+    generated_headers: ["samsung_fingerprint_extension_aidl"],
+    export_generated_headers: ["samsung_fingerprint_extension_aidl"],
+    shared_libs: ["libbinder_ndk"],
 }
